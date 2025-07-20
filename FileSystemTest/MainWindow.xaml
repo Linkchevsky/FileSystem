@@ -1,0 +1,14 @@
+﻿<Window x:Class="FileSystemTest.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FileSystemTest"
+        mc:Ignorable="d"
+        Title="File System" Height="300" Width="500">
+    <Grid>
+        <local:IconTextListControl x:Name="IconList" MouseLeftButtonDownItemSelected="MouseLeftButtonDownItemSelected" MouseLeftButtonUpItemSelected="MouseLeftButtonUpItemSelected"  MouseRightButtonUpItemSelected="MouseRightButtonUpItemSelected" ItemDragEnter="ItemDragEnter" ItemDragLeave="ItemDragLeave" ItemDragOver="ItemDragOver" ItemDrop="ItemDrop" Margin="0,25,0,0"/>
+        <TextBlock x:Name="PathTextBlock" Margin="36,4,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Background="White"><Run Language="ru-ru" Text="Основная страница"/></TextBlock>
+        <Button Margin="10,4,469,0" VerticalAlignment="Top" Height="16" Background="Red"/>
+    </Grid>
+</Window>
