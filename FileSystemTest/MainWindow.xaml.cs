@@ -23,32 +23,43 @@ namespace FileSystemTest
 
         // Коллекция элементов для отображения
         private ObservableCollection<DirectoryItem> Items { get; } = new ObservableCollection<DirectoryItem>();
+
+        public DirectoryItemFolder MainFolder = new DirectoryItemFolder
+        {
+            Id = 100000,
+            Owner = null,
+            Icon = new BitmapImage(new Uri("pack://application:,,,/Resources/folder.png")),
+            Name = "Основной раздел",
+        };
         private DirectoryItem _currentOwner;
 
         public MainWindow()
         {
             InitializeComponent();
 
-            // Инициализация начальной папки
-            _currentOwner = new DirectoryItemFolder();
-
             FileUsed += FileUsage;
             FolderUsed += FolderUsage;
 
-            // Устанавливаем источник данных для элементов
+            // Установка источника данных для списка
             IconList.ItemsSource = Items;
 
             LoadSampleData();
         }
 
+
+        // Отладочный метод
         private void LoadSampleData()
         {
             DirectoryItem newItem;
             int id = 0;
 
 
-            while (!_allElements.ContainsKey(id))
+            while (true)
+            {
                 id = random.Next(100000, 1000000);
+                if (!_allElements.ContainsKey(id))
+                    break;
+            }
             newItem = new DirectoryItemFolder
             {
                 Id = id,
@@ -57,11 +68,15 @@ namespace FileSystemTest
                 Name = "Пустая папка",
             };
             _allElements.Add(newItem.Id, newItem);
-            Items.Add(newItem);
+            MainFolder.AddChild(newItem);
 
 
-            while (!_allElements.ContainsKey(id))
+            while (true)
+            {
                 id = random.Next(100000, 1000000);
+                if (!_allElements.ContainsKey(id))
+                    break;
+            }
             newItem = new DirectoryItemFolder
             {
                 Id = id,
@@ -70,13 +85,17 @@ namespace FileSystemTest
                 Name = "Папка с проектами",
             };
             _allElements.Add(newItem.Id, newItem);
-            Items.Add(newItem);
+            MainFolder.AddChild(newItem);
 
-            DirectoryItemFolder tempItem = (DirectoryItemFolder)newItem;
+            DirectoryItemFolder tempItem = (DirectoryItemFolder)_allElements[id];
             for (int i = 0; i < 10; i++)
             {
-                while (!_allElements.ContainsKey(id))
+                while (true)
+                {
                     id = random.Next(100000, 1000000);
+                    if (!_allElements.ContainsKey(id))
+                        break;
+                }
                 newItem = new DirectoryItemFile
                 {
                     Id = id,
@@ -84,22 +103,31 @@ namespace FileSystemTest
                     Icon = new BitmapImage(new Uri("pack://application:,,,/Resources/file.png")),
                     Name = $"Файл {i} с разным текстом",
                 };
-                tempItem.ChildElements.Add(newItem);
                 _allElements.Add(newItem.Id, newItem);
-                Items.Add(newItem);
+                tempItem.AddChild(newItem);
             }
 
 
             for (int i = 0; i < 20; i++)
             {
-                Items.Add(new DirectoryItemFile
+                while (true)
+                {
+                    id = random.Next(100000, 1000000);
+                    if (!_allElements.ContainsKey(id))
+                        break;
+                }
+                newItem = new DirectoryItemFile
                 {
                     Id = id,
                     Owner = _currentOwner,
                     Icon = new BitmapImage(new Uri("pack://application:,,,/Resources/file.png")),
                     Name = $"Файл {i} с разным текстом",
-                });
+                };
+                _allElements.Add(newItem.Id, newItem);
+                MainFolder.AddChild(newItem);
             }
+
+            LoadElements(MainFolder);
         }
 
 
@@ -111,15 +139,11 @@ namespace FileSystemTest
         {
             if (e is DirectoryItem selectedItem)
             {
-                _lastClickTime = DateTime.Now;
-
                 // Новый элемент
                 if (_selectedBorder != selectedItem.ItemBorder)
                 {
                     if (_selectedBorder != null)
                         _selectedBorder.Background = _defaultColor;
-
-                    selectedItem.ItemBorder = GetElementUnderCursor();
 
                     _selectedBorder = selectedItem.ItemBorder;
                     _selectedBorder.Background = _selectedColor;
@@ -145,6 +169,7 @@ namespace FileSystemTest
                     }
                 }
 
+                _lastClickTime = DateTime.Now;
 
                 if (selectedItem.ItemBorder != null)
                 {
@@ -168,29 +193,6 @@ namespace FileSystemTest
         {
             if (e is DirectoryItem selectedItem)
                 MessageBox.Show($"Выбран элемент:\nID: {selectedItem.Id}\nНазвание: {selectedItem.Name}", "Информация о элементе");
-        }
-
-
-
-        private Border GetElementUnderCursor()
-        {
-            Point position = Mouse.GetPosition(this);
-            HitTestResult hitTestResult = VisualTreeHelper.HitTest(this, position);
-
-            if (hitTestResult != null)
-            {
-                DependencyObject visualHit = hitTestResult.VisualHit;
-
-                while (visualHit != null && !(visualHit is Border))
-                    visualHit = VisualTreeHelper.GetParent(visualHit);
-
-                Border border = (Border)visualHit;
-
-                if (border != null)
-                    return border;
-            }
-
-            return null;
         }
 
 
@@ -237,31 +239,68 @@ namespace FileSystemTest
 
 
 
-        private void FileUsage(DirectoryItemFile file)
+        private void FileUsage(DirectoryItemFile file) => MessageBox.Show("Использование файла");
+
+
+        private void FolderUsage(DirectoryItemFolder folder) => LoadElements(folder);
+
+
+
+        private void LoadElements(DirectoryItemFolder folder)
         {
-            MessageBox.Show("Использование файла");
+            Items.Clear();
+            _currentOwner = folder;
+
+            string path = folder.Name;
+            DirectoryItem owner = folder.Owner;
+            while (true) 
+            {
+                if (owner != null)
+                {
+                    path = owner.Name + '\\' + path;
+                    owner = owner.Owner;
+                }
+                else
+                    break;
+            }
+
+            PathTextBlock.Text = path;
+
+            foreach(DirectoryItem element in folder.GetChild())
+                Items.Add(element);
         }
 
-
-        private void FolderUsage(DirectoryItemFolder file)
+        private void ReturnButton_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Использование папки");
+            DirectoryItemFolder newOwner = (DirectoryItemFolder)_currentOwner.Owner;
+            if (newOwner != null)
+                LoadElements(newOwner);
         }
     }
 
 
-    public class DirectoryItem
+    public abstract class DirectoryItem
     {
         public int Id { get; set; }
         public Border ItemBorder { get; set; }
         public DirectoryItemType ItemType { get; set; }
-        public DirectoryItem Owner;
+        public DirectoryItem Owner { get; set; }
 
 
         public ImageSource Icon { get; set; }
         public string Name { get; set; }
         public Color Color { get; set; }
         public double Opacity { get; set; }
+
+
+        public virtual void Open() => Console.WriteLine($"Opening {ItemType}: {Name}");
+
+        public virtual void Delete() => Console.WriteLine($"Deleting {ItemType}: {Name}");
+
+        public virtual string GetInfo()
+        {
+            return $"{ItemType} | ID: {Id} | Name: {Name}";
+        }
     }
 
     public class DirectoryItemFile : DirectoryItem
@@ -270,16 +309,48 @@ namespace FileSystemTest
         {
             ItemType = DirectoryItemType.File;
         }
+
+
+        public override void Open()
+        {
+            base.Open();
+            MessageBox.Show(Name);
+        }
+
+        public override void Delete()
+        {
+            Console.WriteLine($"Удаление файла {Name}");
+        }
     }
 
     public class DirectoryItemFolder : DirectoryItem
     {
-        public List<DirectoryItem> ChildElements = new List<DirectoryItem>();
+        private List<DirectoryItem> _childElements = new List<DirectoryItem>();
 
         public DirectoryItemFolder()
         {
             ItemType = DirectoryItemType.Folder;
         }
+
+
+        public override void Open()
+        {
+            base.Open();
+            MessageBox.Show(Name);
+        }
+
+        public override void Delete()
+        {
+            Console.WriteLine($"Удаление папки {Name}");
+        }
+
+        public void AddChild(DirectoryItem item)
+        {
+            item.Owner = this;
+            _childElements.Add(item);
+        }
+
+        public List<DirectoryItem> GetChild() { return _childElements; }
     }
 
 
@@ -295,7 +366,7 @@ namespace FileSystemTest
 
 
 /*
-private Border GetElementUnderCursor()
+        private Border GetElementUnderCursor()
         {
             Point position = Mouse.GetPosition(this);
             HitTestResult hitTestResult = VisualTreeHelper.HitTest(this, position);
@@ -304,21 +375,15 @@ private Border GetElementUnderCursor()
             {
                 DependencyObject visualHit = hitTestResult.VisualHit;
 
-                Border border = FindVisualParent<Border>(visualHit);
+                while (visualHit != null && !(visualHit is Border))
+                    visualHit = VisualTreeHelper.GetParent(visualHit);
+
+                Border border = (Border)visualHit;
+
                 if (border != null)
                     return border;
             }
 
             return null;
-        }
-
-        public static T FindVisualParent<T>(DependencyObject child) where T : DependencyObject
-        {
-            while (child != null && !(child is T))
-            {
-                child = VisualTreeHelper.GetParent(child);
-            }
-
-            return child as T;
         }
 */

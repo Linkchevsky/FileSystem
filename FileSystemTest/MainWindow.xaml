@@ -9,6 +9,6 @@
     <Grid>
         <local:IconTextListControl x:Name="IconList" MouseLeftButtonDownItemSelected="MouseLeftButtonDownItemSelected" MouseLeftButtonUpItemSelected="MouseLeftButtonUpItemSelected"  MouseRightButtonUpItemSelected="MouseRightButtonUpItemSelected" ItemDragEnter="ItemDragEnter" ItemDragLeave="ItemDragLeave" ItemDragOver="ItemDragOver" ItemDrop="ItemDrop" Margin="0,25,0,0"/>
         <TextBlock x:Name="PathTextBlock" Margin="36,4,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Background="White"><Run Language="ru-ru" Text="Основная страница"/></TextBlock>
-        <Button Margin="10,4,469,0" VerticalAlignment="Top" Height="16" Background="Red"/>
+        <Button x:Name="ReturnButton" Margin="10,4,0,0" VerticalAlignment="Top" Height="16" Background="Red" HorizontalAlignment="Left" Width="21" Click="ReturnButton_Click"/>
     </Grid>
 </Window>
