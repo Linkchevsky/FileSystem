@@ -293,9 +293,9 @@ namespace FileSystemTest
         public double Opacity { get; set; }
 
 
-        public virtual void Open() => Console.WriteLine($"Opening {ItemType}: {Name}");
+        public abstract void Open();
 
-        public virtual void Delete() => Console.WriteLine($"Deleting {ItemType}: {Name}");
+        public abstract void Delete();
 
         public virtual string GetInfo()
         {
@@ -313,7 +313,6 @@ namespace FileSystemTest
 
         public override void Open()
         {
-            base.Open();
             MessageBox.Show(Name);
         }
 
@@ -335,7 +334,6 @@ namespace FileSystemTest
 
         public override void Open()
         {
-            base.Open();
             MessageBox.Show(Name);
         }
 
